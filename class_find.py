@@ -74,7 +74,6 @@ class LostItemFinder:
     def adjust_date(self, nowYear, nowMonth, year, month, day):
         year_diff = nowYear - year
         month_diff = nowMonth -  month
-        ###현재 문제: 달력의 달 버튼을 누르면 달력이 초기화? 되는거 같음 그래서 ㅅㅂ 무슨 요소가 없대
         # button_of_year_change = self.driver.find_element(By.XPATH, '//*[@id="CalendarControl"]/div/div[1]/div[1]/button[1]') #//button[@class='m_prev' and @title='Previous Month']
         # left_button_of_month_change = self.driver.find_element(By.XPATH, '//*[@id="CalendarControl"]/div/div[1]/div[1]/button[2]')
         # right_button_of_month_change = self.driver.find_element(By.XPATH,'//*[@id="CalendarControl"]/div/div[1]/div[3]/button[1]')
