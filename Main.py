@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox, Frame, Canvas, Scrollbar
-from lostFind.class_find import LostItemFinder as LIT
+from class_find import LostItemFinder as LIT
+import threading
 import pyperclip
 
 def search_item():
@@ -11,15 +12,33 @@ def search_item():
     if not findItem or not distinct or not startDate:
         messagebox.showwarning("입력 오류", "검색할 아이템을 입력하세요.")
         return
-    lostMyItem = LIT(findItem, distinct, startDate, endDate)
-    lostMyItem.open_website("https://www.lost112.go.kr/find/findList.do")
-    lostMyItem.input_item()
-    lostMyItem.select_date()
-    results = lostMyItem.search_items()
-    lostMyItem.close_browser()
     
+    # 버튼 비활성화 및 텍스트 변경
+    search_button.config(state=tk.DISABLED, text="검색 중...")
     clear_buttons()  # 기존 버튼 지우기
-    create_buttons(results)  # 새로운 버튼 생성
+
+    def run_search():
+        try:
+            lostMyItem = LIT(findItem, distinct, startDate, endDate)
+            lostMyItem.open_website("https://www.lost112.go.kr/find/findList.do")
+            lostMyItem.input_item()
+            lostMyItem.select_date()
+            results = lostMyItem.search_items()
+            lostMyItem.close_browser()
+            # UI 업데이트는 메인 스레드에서 처리
+            root.after(0, lambda: update_ui(results))
+        except Exception as e:
+            root.after(0, lambda: messagebox.showerror("오류", f"검색 중 오류 발생: {e}"))
+            root.after(0, lambda: search_button.config(state=tk.NORMAL, text="검색"))
+
+    # 별도 스레드에서 검색 실행
+    threading.Thread(target=run_search, daemon=True).start()
+
+def update_ui(results):
+    create_buttons(results)
+    search_button.config(state=tk.NORMAL, text="검색")
+    if not results:
+        messagebox.showinfo("알림", "검색 결과가 없습니다.")
 
 def clear_buttons():
     for widget in button_frame.winfo_children():
@@ -79,10 +98,5 @@ canvas.config(yscrollcommand=scrollbar.set)
 
 canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-
-center_frame = Frame(button_frame)
-center_frame.config(pady =10)
-
-button_frame.pack_propagate
 
 root.mainloop()

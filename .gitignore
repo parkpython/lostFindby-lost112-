@@ -1,0 +1,15 @@
+# Python compilation
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.env
+
+# macOS specific
+.DS_Store
+
+# Logs
+*.log

@@ -4,7 +4,6 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
-from selenium.common.exceptions import StaleElementReferenceException, NoSuchElementException
 from selenium.webdriver.chrome.options import Options
 
 
@@ -17,9 +16,13 @@ class LostItemFinder:
         self.day1, self.day2 = int(startDate[6:]) , int(endDate[6:])
         # Chrome 옵션 설정
         chrome_options = Options()
-        chrome_options.add_argument("--start-maximized")  # 전체 화면으로 시작
+        chrome_options.add_argument("--headless")  # 창 없는 모드 (Headless)
+        chrome_options.add_argument("--disable-gpu") # GPU 가속 비활성화 (호환성)
+        chrome_options.add_argument("--window-size=1920,1080") # 가상 해상도 설정
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
         
-        self.driver = webdriver.Chrome(chrome_options)
+        self.driver = webdriver.Chrome(options=chrome_options)
         
     def open_website(self, url):
         self.driver.get(url)
@@ -56,11 +59,6 @@ class LostItemFinder:
         self.driver.implicitly_wait(2)
         
         self.adjust_date(nowdate_year2, nowdate_month2, self.year2, self.month2, self.day2) 
-          
-        # button_of_year_change_xpath1 = '//*[@id="CalendarControl"]/div/div[1]/div[1]/button[1]'
-        # left_button_of_month_change_xpath1 = '//*[@id="CalendarControl"]/div/div[1]/div[1]/button[2]'
-        # right_button_of_month_change_xpath1 = '//*[@id="CalendarControl"]/div/div[1]/div[3]/button[1]'
-        
         
     def click_button(self,button_xpath):
         try:
@@ -74,10 +72,6 @@ class LostItemFinder:
     def adjust_date(self, nowYear, nowMonth, year, month, day):
         year_diff = nowYear - year
         month_diff = nowMonth -  month
-        # button_of_year_change = self.driver.find_element(By.XPATH, '//*[@id="CalendarControl"]/div/div[1]/div[1]/button[1]') #//button[@class='m_prev' and @title='Previous Month']
-        # left_button_of_month_change = self.driver.find_element(By.XPATH, '//*[@id="CalendarControl"]/div/div[1]/div[1]/button[2]')
-        # right_button_of_month_change = self.driver.find_element(By.XPATH,'//*[@id="CalendarControl"]/div/div[1]/div[3]/button[1]')
-        
         
         if year_diff != 0: 
             for _ in range(year_diff): # year difference 만큼 반복
@@ -107,10 +101,10 @@ class LostItemFinder:
         self.driver.implicitly_wait(1)
         
 
-        indeX = 2
-        End = False
+        page_index = 2
+        is_ended = False
         
-        while not End:
+        while not is_ended:
             try:
                 for index in range(1, 11):
                     sub_find_link = self.driver.find_element(By.XPATH, f'//*[@id="contents"]/div[3]/table/tbody/tr[{index}]/td[2]/div/a')
@@ -128,18 +122,18 @@ class LostItemFinder:
                     self.driver.back()
                     self.driver.implicitly_wait(1)
                     
-                if indeX == 11:
+                if page_index == 11:
                     next_button = self.driver.find_element(By.XPATH, '//*[@id="paging"]/span[2]/a[1]')
                     next_button.click()
-                    indeX = 1
+                    page_index = 1
                 
-                index_button = self.driver.find_element(By.XPATH, f'//*[@id="paging"]/a[{indeX}]')
+                index_button = self.driver.find_element(By.XPATH, f'//*[@id="paging"]/a[{page_index}]')
                 index_button.click()
-                indeX += 1
+                page_index += 1
 
             except NoSuchElementException: 
                 # print("요소를 찾을 수 없습니다. 브라우저를 종료합니다.")
-                End = True
+                is_ended = True
                 break
             
         return results
@@ -151,9 +145,10 @@ class LostItemFinder:
 if __name__ == "__main__":
     find_item = input("찾을 물건을 입력하세요: ")
     distinct = input("찾을 물건의 특징을 입력하세요: ")
-    year_month_day = input("일,년,월,일을 입력하세요(입력 예시: 20240427): ")
+    start_date = input("시작 날짜를 입력하세요(예: 20240427): ")
+    end_date = input("종료 날짜를 입력하세요(예: 20240805): ")
 
-    finder = LostItemFinder(find_item, distinct, year_month_day)
+    finder = LostItemFinder(find_item, distinct, start_date, end_date)
     finder.open_website("https://www.lost112.go.kr/find/findList.do")
     finder.input_item()
     finder.select_date()
